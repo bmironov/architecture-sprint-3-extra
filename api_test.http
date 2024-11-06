@@ -1,0 +1,102 @@
+@hostname=127.0.0.1
+@port=8080
+@host={{hostname}}:{{port}}
+
+GET http://{{host}}/livez
+GET http://{{host}}/readyz
+
+GET http://{{host}}/hvac/1
+GET http://{{host}}/hvac/2
+GET http://{{host}}/hvac/123
+
+POST http://{{host}}/hvac
+content-type: application/json
+
+{
+    "model": "WarmHome 2.0",
+    "serial_id": 789
+}
+
+POST http://{{host}}/hvac
+content-type: application/json
+
+{
+    "model": WarmHome 2.0,
+    "serial_id": "bad_data"
+}
+
+PUT http://{{host}}/hvac/2
+content-type: application/json
+
+{
+    "model": "WarmHome 1.5",
+    "serial_id": 456
+}
+
+DELETE http://{{host}}/hvac/2
+
+GET http://{{host}}/hvac/telemetry/2
+
+PUT http://{{host}}/hvac/telemetry/2
+content-type: application/json
+
+{
+    "current_temp": 21.5,
+    "target_temp": 22.5
+}
+
+PUT http://{{host}}/hvac/telemetry/2
+content-type: application/json
+
+{
+    "current_temp": 22.0,
+    "target_temp": 22.5
+}
+
+PUT http://{{host}}/hvac/telemetry/123
+content-type: application/json
+
+{
+    "current_temp": 22.0,
+    "target_temp": 22.5
+}
+
+PUT http://{{host}}/hvac/state/1
+content-type: application/json
+
+{
+    "state": "on",
+    "target_temp": 22.5
+}
+
+PUT http://{{host}}/hvac/state/1
+content-type: application/json
+
+{
+    "state": "off",
+    "target_temp": 21.5
+}
+
+PUT http://{{host}}/hvac/state/1
+content-type: application/json
+
+{
+    "state": "abc",
+    "target_temp": 22.5
+}
+
+PUT http://{{host}}/hvac/state/1
+content-type: application/json
+
+{
+    "state": "on",
+    "target_temp": "abc"
+}
+
+PUT http://{{host}}/hvac/state/123
+content-type: application/json
+
+{
+    "state": "on",
+    "target_temp": 22.5
+}

@@ -1,0 +1,61 @@
+services:
+  postgres_hvac:
+    image: postgres:alpine
+    container_name: postgres_hvac
+    environment:
+      POSTGRES_DB: warm_home_hvac
+      POSTGRES_USER: hvac_user
+      POSTGRES_PASSWORD: hvac_password
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+    networks:
+      - warm_home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    volumes:
+      - hvac_data:/var/lib/postgresql/data
+
+  postgres_light:
+    image: postgres:alpine
+    container_name: postgres_light
+    environment:
+      POSTGRES_DB: warm_home_light
+      POSTGRES_USER: light_user
+      POSTGRES_PASSWORD: light_password
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5433:5432"
+    networks:
+      - warm_home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    volumes:
+      - light_data:/var/lib/postgresql/data
+
+networks:
+  warm_home:
+    driver: bridge
+volumes:
+  hvac_data:
+  light_data:
