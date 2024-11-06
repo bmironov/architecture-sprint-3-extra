@@ -13,7 +13,14 @@
 //            "port": 2345,
 //            "host": "127.0.0.1",
             "program": "${fileDirname/../src/main",
-            "env": {},
+            "env": {
+                "APP_PORT": "8080",
+                "DB_USER": "light_user",
+                "DB_PASS": "light_password",
+                "DB_HOST": "localhost",
+                "DB_PORT": "5433",
+                "DB_NAME": "warm_home_light"
+            },
             "args": [],
 //            "showLog": true
         }

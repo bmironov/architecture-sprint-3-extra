@@ -25,4 +25,3 @@ ALTER TABLE hvacs_telemetry ADD CONSTRAINT fk_hvacs_telemetry_hvacs FOREIGN KEY(
 INSERT INTO hvacs(model, serial_) VALUES ('WarmHome 1.2', 123);
 INSERT INTO hvacs(model, serial_) VALUES ('WarmHome 1.3', 456);
 COMMIT;
-

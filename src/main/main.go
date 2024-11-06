@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"database/sql"
 
@@ -12,7 +13,7 @@ import (
 
 var (
 	db      *sql.DB
-	appPort string = "8080" // os.Getenv("APP_PORT")
+	appPort string = "8080"
 	dbUser  string = "hvac_user"
 	dbPass  string = "hvac_password"
 	dbHost  string = "127.0.0.1"
@@ -21,8 +22,28 @@ var (
 	dbFlag  bool   = false
 )
 
+func envVar(value string, variable string) string {
+	tmp, flag := os.LookupEnv(variable)
+	if flag {
+		return tmp
+	} else {
+		return value
+	}
+}
+
+func initEnv() {
+	appPort = envVar(appPort, "APP_PORT")
+	dbUser = envVar(appPort, "DB_USER")
+	dbPass = envVar(appPort, "DB_PASS")
+	dbHost = envVar(appPort, "DB_HOST")
+	dbPort = envVar(appPort, "DB_PORT")
+	dbName = envVar(appPort, "DB_NAME")
+}
+
 func main() {
 	var err error
+
+	initEnv()
 	mux := http.NewServeMux()
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
@@ -44,6 +65,14 @@ func main() {
 	mux.HandleFunc("GET    /hvac/telemetry/{id}", getHvacTelemetry)
 	mux.HandleFunc("PUT    /hvac/telemetry/{id}", addHvacTelemetry)
 	mux.HandleFunc("PUT    /hvac/state/{id}", sendHvacCommand)
+
+	mux.HandleFunc("POST   /lights", createLight)
+	mux.HandleFunc("PUT    /lights/{id}", updateLight)
+	mux.HandleFunc("GET    /lights/{id}", findLight)
+	mux.HandleFunc("DELETE /lights/{id}", deleteLight)
+	mux.HandleFunc("GET    /lights/telemetry/{id}", getLightTelemetry)
+	mux.HandleFunc("PUT    /lights/telemetry/{id}", addLightTelemetry)
+	mux.HandleFunc("PUT    /lights/state/{id}", sendLightCommand)
 
 	mux.HandleFunc("GET /", hello)
 

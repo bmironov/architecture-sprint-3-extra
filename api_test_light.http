@@ -1,0 +1,102 @@
+@hostname=127.0.0.1
+@port=8080
+@host={{hostname}}:{{port}}
+
+GET http://{{host}}/livez
+GET http://{{host}}/readyz
+
+GET http://{{host}}/lights/1
+GET http://{{host}}/lights/2
+GET http://{{host}}/lights/123
+
+POST http://{{host}}/lights
+content-type: application/json
+
+{
+    "model": "BrightHome 2.0",
+    "serial_id": 789
+}
+
+POST http://{{host}}/lights
+content-type: application/json
+
+{
+    "model": BrightHome 2.0,
+    "serial_id": "bad_data"
+}
+
+PUT http://{{host}}/lights/2
+content-type: application/json
+
+{
+    "model": "WarmHome 1.5",
+    "serial_id": 456
+}
+
+DELETE http://{{host}}/lights/2
+
+GET http://{{host}}/lights/telemetry/2
+
+PUT http://{{host}}/lights/telemetry/2
+content-type: application/json
+
+{
+    "current_bright": 75,
+    "target_bright": 95.5
+}
+
+PUT http://{{host}}/lights/telemetry/2
+content-type: application/json
+
+{
+    "current_bright": 75.5,
+    "target_bright": 95.5
+}
+
+PUT http://{{host}}/lights/telemetry/123
+content-type: application/json
+
+{
+    "current_bright": 80,
+    "target_bright": 90
+}
+
+PUT http://{{host}}/lights/state/1
+content-type: application/json
+
+{
+    "state": "on",
+    "target_bright": 79
+}
+
+PUT http://{{host}}/lights/state/1
+content-type: application/json
+
+{
+    "state": "off",
+    "target_bright": 80
+}
+
+PUT http://{{host}}/lights/state/1
+content-type: application/json
+
+{
+    "state": "abc",
+    "target_bright": 80
+}
+
+PUT http://{{host}}/lights/state/1
+content-type: application/json
+
+{
+    "state": "on",
+    "target_bright": "abc"
+}
+
+PUT http://{{host}}/lights/state/123
+content-type: application/json
+
+{
+    "state": "on",
+    "target_bright": 91.5
+}
