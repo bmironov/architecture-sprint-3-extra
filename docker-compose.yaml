@@ -1,6 +1,8 @@
 services:
   warm_home_hvac:
     image: warm_home:latest
+    build:
+      context: .
     container_name: warm_home_hvac
     ports:
       - '8080:8080'
@@ -25,6 +27,8 @@ services:
   warm_home_light:
     image: warm_home:latest
     container_name: warm_home_light
+    build:
+      context: .
     ports:
       - '8081:8080'
     networks:
