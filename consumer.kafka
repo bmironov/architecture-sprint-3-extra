@@ -1,0 +1,7 @@
+CONSUMER consumer-group-id
+topic: test-topic
+
+
+PRODUCER abc
+topic: test-topic
+{"type": "three"}

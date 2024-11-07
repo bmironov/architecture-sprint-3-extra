@@ -76,5 +76,5 @@ func main() {
 
 	mux.HandleFunc("GET /", hello)
 
-	log.Fatal(http.ListenAndServe("127.0.0.1:"+appPort, mux))
+	log.Fatal(http.ListenAndServe(":"+appPort, mux))
 }

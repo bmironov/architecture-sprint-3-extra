@@ -1,4 +1,58 @@
 services:
+  warm_home_hvac:
+    image: warm_home:latest
+    container_name: warm_home_hvac
+    ports:
+      - '8080:8080'
+    networks:
+      - warm_home
+    environment:
+      APP_PORT: 8080
+      DB_USER: hvac_user
+      DB_PASS: hvac_password
+      DB_HOST: postgres_hvac
+      DB_PORT: 5432
+      DB_NAME: warm_home_hvac
+    depends_on:
+      - postgres_hvac
+    healthcheck:
+          test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+          start_period: 10s
+
+  broker:
+    image: apache/kafka:latest
+    container_name: broker
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    networks:
+      - warm_home
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+#      KAFKA_CLIENT_USERS: user
+#      KAFKA_CLIENT_PASSWORDS: password
+    healthcheck:
+          test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+          start_period: 10s
+
   postgres_hvac:
     image: postgres:alpine
     container_name: postgres_hvac
@@ -56,6 +110,7 @@ services:
 networks:
   warm_home:
     driver: bridge
+
 volumes:
   hvac_data:
   light_data:
