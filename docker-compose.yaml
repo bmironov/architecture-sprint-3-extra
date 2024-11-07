@@ -22,6 +22,29 @@ services:
           retries: 5
           start_period: 10s
 
+  warm_home_light:
+    image: warm_home:latest
+    container_name: warm_home_light
+    ports:
+      - '8081:8080'
+    networks:
+      - warm_home
+    environment:
+      APP_PORT: 8080
+      DB_USER: light_user
+      DB_PASS: light_password
+      DB_HOST: postgres_light
+      DB_PORT: 5432
+      DB_NAME: warm_home_light
+    depends_on:
+      - postgres_light
+    healthcheck:
+          test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+          start_period: 10s
+
   broker:
     image: apache/kafka:latest
     container_name: broker
@@ -66,7 +89,7 @@ services:
     networks:
       - warm_home
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      test: ["CMD-SHELL", "pg_isready -U hvac_user -d warm_home_hvac"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,7 +116,7 @@ services:
     networks:
       - warm_home
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      test: ["CMD-SHELL", "pg_isready -U light_user -d warm_home_light"]
       interval: 10s
       timeout: 5s
       retries: 5
