@@ -16,13 +16,15 @@ services:
       DB_PORT: 5432
       DB_NAME: warm_home_hvac
     depends_on:
-      - postgres_hvac
+      postgres_hvac:
+        condition: service_healthy
+        restart: true
     healthcheck:
           test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
           interval: 10s
           timeout: 5s
           retries: 5
-          start_period: 10s
+          start_period: 5s
 
   warm_home_light:
     image: warm_home:latest
@@ -41,13 +43,15 @@ services:
       DB_PORT: 5432
       DB_NAME: warm_home_light
     depends_on:
-      - postgres_light
+      postgres_light:
+        condition: service_healthy
+        restart: true
     healthcheck:
           test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
           interval: 10s
           timeout: 5s
           retries: 5
-          start_period: 10s
+          start_period: 5s
 
   broker:
     image: apache/kafka:latest
