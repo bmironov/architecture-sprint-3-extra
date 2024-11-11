@@ -1,8 +1,49 @@
 services:
+  kong-gateway:
+    image: kong/kong-gateway:latest
+    container_name: kong-gateway
+    ports:
+      - '8000:8000' # Takes incoming HTTP traffic from Consumers, and forwards it to upstream Services.
+      - '8443:8443' # Takes incoming HTTPS traffic from Consumers, and forwards it to upstream Services.
+      - '8001:8001' # Admin API. Listens for calls from the command line over HTTP.
+      - '8444:8444' # Admin API. Listens for calls from the command line over HTTPS.
+      - '8002:8002' # Kong Manager (GUI). Listens for HTTP traffic.
+      - '8445:8445' # Kong Manager (GUI). Listens for HTTPS traffic.
+      - '8003:8003' 
+      - '8004:8004'
+      - '8005:8005' # Hybrid mode only. Control Plane listens for traffic from Data Planes.
+      - '8006:8006' # Hybrid mode only. Control Plane listens for Vitals telemetry data from Data Planes.
+      - '8007:8007' # Status listener. Listens for calls from monitoring clients over HTTP.
+    networks:
+      - warm_home
+    depends_on:
+      postgres_kong:
+        condition: service_healthy
+        restart: true
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres_kong
+      KONG_PG_PORT: 5432
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kongpass
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    healthcheck:
+          test: ["CMD-SHELL", "kong health || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+          start_period: 5s
+
   warm_home_hvac:
     image: warm_home:latest
     build:
       context: .
+      dockerfile: ./Dockerfile
     container_name: warm_home_hvac
     ports:
       - '8080:8080'
@@ -31,6 +72,7 @@ services:
     container_name: warm_home_light
     build:
       context: .
+      dockerfile: ./Dockerfile
     ports:
       - '8081:8080'
     networks:
@@ -84,6 +126,33 @@ services:
           retries: 5
           start_period: 10s
 
+  postgres_kong:
+    image: postgres:alpine
+    container_name: postgres_kong
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kongpass
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+    networks:
+      - warm_home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+
   postgres_hvac:
     image: postgres:alpine
     container_name: postgres_hvac
@@ -93,11 +162,11 @@ services:
       POSTGRES_PASSWORD: hvac_password
       PGDATA: "/var/lib/postgresql/data/pgdata"
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - warm_home
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hvac_user -d warm_home_hvac"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -120,11 +189,11 @@ services:
       POSTGRES_PASSWORD: light_password
       PGDATA: "/var/lib/postgresql/data/pgdata"
     ports:
-      - "5433:5432"
+      - "5434:5432"
     networks:
       - warm_home
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U light_user -d warm_home_light"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -140,8 +209,10 @@ services:
 
 networks:
   warm_home:
+    name: warm_home
     driver: bridge
 
 volumes:
   hvac_data:
   light_data:
+  kong_data:
