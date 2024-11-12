@@ -4,7 +4,7 @@ COPY src/go.mod src/go.sum ./
 COPY src/main/*.go  ./main/
 COPY src/hvac/*.go  ./hvac/
 COPY src/light/*.go ./light/
-RUN go mod download && cd main; CGO_ENABLED=0 GOOS=linux go build -o /warm_home ./... && ls -r /
+RUN go mod download && go mod tidy && cd main; CGO_ENABLED=0 GOOS=linux go build -o /warm_home ./...
 
 EXPOSE 8080/tcp
 

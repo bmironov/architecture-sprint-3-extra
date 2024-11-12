@@ -156,20 +156,13 @@ func addLightTelemetry(w http.ResponseWriter, req *http.Request) {
 
 	data.LightId = id
 	data.CreatedAt = time.Now().UTC()
-	tele, err := light.CreateLightTelemetry(db, &data)
-	if err != nil {
-		wrapLightResponse(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	json, err := json.Marshal(tele)
+	err = light.CreateLightTelemetry(kafkaWriter, req.Context(), &data)
 	if err != nil {
 		wrapLightResponse(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(json)
 }
 
 func getLightTelemetry(w http.ResponseWriter, req *http.Request) {

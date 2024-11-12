@@ -1,11 +1,14 @@
 package light
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	_ "github.com/lib/pq"
+	kafka "github.com/segmentio/kafka-go"
 )
 
 const (
@@ -118,23 +121,24 @@ func FindLight(db *sql.DB, id int) (*LIGHT, error) {
 	return &data, nil
 }
 
-func CreateLightTelemetry(db *sql.DB, data *LIGHTtelemetry) (*LIGHTtelemetry, error) {
-	sql := `INSERT INTO lights_telemetry(light_id, created_at, current_brightness, target_brightness)
-            VALUES($1, $2, $3, $4) RETURNING light_telemetry_id`
-
-	rows, err := db.Query(sql, data.LightId, data.CreatedAt, data.CurrentBright, data.TargetBright)
+func CreateLightTelemetry(kafkaWriter *kafka.Writer, ctx context.Context, data *LIGHTtelemetry) error {
+	json, err := json.Marshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("can't execute INSERT INTO lights_telemetry: %w", err)
+		return fmt.Errorf("can't convert telemetry data to json: %w", err)
 	}
 
-	for rows.Next() {
-		err = rows.Scan(&data.Id)
-		if err != nil {
-			return nil, fmt.Errorf("can't find new light_telemetry_id: %w", err)
-		}
+	msg := kafka.Message{
+		Key:   []byte(fmt.Sprintf("light-%d-%d", data.LightId, data.CreatedAt.Unix())),
+		Value: json,
 	}
 
-	return data, nil
+	err = kafkaWriter.WriteMessages(ctx, msg)
+	if err != nil {
+		return fmt.Errorf("can't write Kafka message: %w", err)
+	}
+	fmt.Printf("Kafka's accepted: %s\n", json)
+
+	return nil
 }
 
 func GetLightTelemetry(db *sql.DB, lightId int) (data []LIGHTtelemetry, err error) {

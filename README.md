@@ -118,3 +118,34 @@ curl -s http://localhost:8000/hvac/hvac/1 | jq
 curl -s http://localhost:8000/hvac/lights/1 | jq
 curl -s http://localhost:8000/lights/lights/1 | jq
 ```
+
+## Kafka
+
+### Auto topic creation
+```KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"```
+
+### Splitting 'lights' monolith
+
+The 'Lights' monolith has been split into 2 parts:
+1. Controller that was processing telemetry instead of inserting data into DB
+   directly now commits this data into Kafka topic. This app is residing in
+   ```warm_home_light``` container
+2. New application in ```src/telemetry.lights``` has been added. It is simple
+   Kafka consumer, that listens to topic and executes ```INSERT``` statements
+   into ```lights_telemetry``` table. This app is residing in
+   ```warm_home_light_telemetry``` container and is configured via environment
+   variables.
+
+Below is example of ```PUT``` request to publish fresh lights telemetry data:
+```
+PUT http://localhost:8000/lights/lights/1/telemetry
+content-type: application/json
+
+{
+    "current_bright": 80,
+    "target_bright": 90
+}
+```
+
+To monitor async data processing ```docker logs -f <container_name>``` command
+can be utilized against each of these two containers.
