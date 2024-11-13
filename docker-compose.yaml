@@ -113,7 +113,7 @@ services:
       DB_HOST: postgres_light
       DB_PORT: 5432
       DB_NAME: warm_home_light
-      KAFKA_URL: broker:9092
+      KAFKA_URL: broker:29092
       KAFKA_TOPIC: warm_home_lights
     depends_on:
       postgres_light:
@@ -129,13 +129,14 @@ services:
     ports:
       - '9092:9092'
       - '29092:29092'
+      - '29093:29093'
     networks:
       - warm_home
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
