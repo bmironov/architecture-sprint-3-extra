@@ -1,3 +1,5 @@
+name: warm-home
+
 services:
   kong-gateway:
     image: kong/kong-gateway:latest
@@ -15,14 +17,14 @@ services:
       - '8006:8006' # Hybrid mode only. Control Plane listens for Vitals telemetry data from Data Planes.
       - '8007:8007' # Status listener. Listens for calls from monitoring clients over HTTP.
     networks:
-      - warm_home
+      - warm-home
     depends_on:
-      postgres_kong:
+      postgres-kong:
         condition: service_healthy
         restart: true
     environment:
       KONG_DATABASE: postgres
-      KONG_PG_HOST: postgres_kong
+      KONG_PG_HOST: postgres-kong
       KONG_PG_PORT: 5432
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kongpass
@@ -39,25 +41,25 @@ services:
       retries: 5
       start_period: 5s
 
-  warm_home_hvac:
-    image: warm_home:latest
+  warm-home-hvac:
+    image: warm-home-hvac:latest
     build:
       context: .
       dockerfile: ./Dockerfile.web
-    container_name: warm_home_hvac
+    container_name: warm-home-hvac
     ports:
       - '8080:8080'
     networks:
-      - warm_home
+      - warm-home
     environment:
       APP_PORT: 8080
       DB_USER: hvac_user
       DB_PASS: hvac_password
-      DB_HOST: postgres_hvac
+      DB_HOST: postgres-hvac
       DB_PORT: 5432
       DB_NAME: warm_home_hvac
     depends_on:
-      postgres_hvac:
+      postgres-hvac:
         condition: service_healthy
         restart: true
     healthcheck:
@@ -67,27 +69,27 @@ services:
       retries: 5
       start_period: 5s
 
-  warm_home_light:
-    image: warm_home_light:latest
-    container_name: warm_home_light
+  warm-home-light:
+    image: warm-home-light:latest
+    container_name: warm-home-light
     build:
       context: .
       dockerfile: ./Dockerfile.web
     ports:
       - '8081:8080'
     networks:
-      - warm_home
+      - warm-home
     environment:
       APP_PORT: 8080
       DB_USER: light_user
       DB_PASS: light_password
-      DB_HOST: postgres_light
+      DB_HOST: postgres-light
       DB_PORT: 5432
       DB_NAME: warm_home_light
       KAFKA_URL: broker:29092
-      KAFKA_TOPIC: warm_home_lights
+      KAFKA_TOPIC: warm-home-lights
     depends_on:
-      postgres_light:
+      postgres-light:
         condition: service_healthy
         restart: true
     healthcheck:
@@ -97,27 +99,27 @@ services:
       retries: 5
       start_period: 5s
 
-  warm_home_light_telemetry:
-    image: warm_home_light_telemetry:latest
-    container_name: warm_home_light_telemetry
+  warm-home-light-telemetry:
+    image: warm-home-light-telemetry:latest
+    container_name: warm-home-light-telemetry
     build:
       context: .
       dockerfile: ./Dockerfile.telemetry.lights
     ports:
       - '39092:9092'
     networks:
-      - warm_home
+      - warm-home
     environment:
       DB_USER: light_user
       DB_PASS: light_password
-      DB_HOST: postgres_light
+      DB_HOST: postgres-light
       DB_PORT: 5432
       DB_NAME: warm_home_light
       KAFKA_URL: broker:29092
-      KAFKA_TOPIC: warm_home_lights
+      KAFKA_TOPIC: warm-home-lights
       HEALTHCHECK_PORT: 9090
     depends_on:
-      postgres_light:
+      postgres-light:
         condition: service_healthy
         restart: true
       broker:
@@ -138,7 +140,7 @@ services:
       - '29092:29092'
       - '29093:29093'
     networks:
-      - warm_home
+      - warm-home
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -163,9 +165,9 @@ services:
       retries: 5
       start_period: 10s
 
-  postgres_kong:
+  postgres-kong:
     image: postgres:alpine
-    container_name: postgres_kong
+    container_name: postgres-kong
     environment:
       POSTGRES_DB: kong
       POSTGRES_USER: kong
@@ -174,7 +176,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - warm_home
+      - warm-home
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -186,13 +188,13 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 4G
+          memory: 512M
     volumes:
-      - kong_data:/var/lib/postgresql/data
+      - kong-data:/var/lib/postgresql/data
 
-  postgres_hvac:
+  postgres-hvac:
     image: postgres:alpine
-    container_name: postgres_hvac
+    container_name: postgres-hvac
     environment:
       POSTGRES_DB: warm_home_hvac
       POSTGRES_USER: hvac_user
@@ -201,7 +203,7 @@ services:
     ports:
       - "5433:5432"
     networks:
-      - warm_home
+      - warm-home
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -213,13 +215,13 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 4G
+          memory: 512M
     volumes:
-      - hvac_data:/var/lib/postgresql/data
+      - hvac-data:/var/lib/postgresql/data
 
-  postgres_light:
+  postgres-light:
     image: postgres:alpine
-    container_name: postgres_light
+    container_name: postgres-light
     environment:
       POSTGRES_DB: warm_home_light
       POSTGRES_USER: light_user
@@ -228,7 +230,7 @@ services:
     ports:
       - "5434:5432"
     networks:
-      - warm_home
+      - warm-home
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -240,16 +242,16 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 4G
+          memory: 512M
     volumes:
-      - light_data:/var/lib/postgresql/data
+      - light-data:/var/lib/postgresql/data
 
 networks:
-  warm_home:
-    name: warm_home
+  warm-home:
+    name: warm-home
     driver: bridge
 
 volumes:
-  hvac_data:
-  light_data:
-  kong_data:
+  hvac-data:
+  light-data:
+  kong-data:
