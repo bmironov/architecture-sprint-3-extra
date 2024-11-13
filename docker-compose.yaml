@@ -84,7 +84,7 @@ services:
       DB_HOST: postgres_light
       DB_PORT: 5432
       DB_NAME: warm_home_light
-      KAFKA_URL: broker:9092
+      KAFKA_URL: broker:29092
       KAFKA_TOPIC: warm_home_lights
     depends_on:
       postgres_light:
@@ -115,6 +115,7 @@ services:
       DB_NAME: warm_home_light
       KAFKA_URL: broker:29092
       KAFKA_TOPIC: warm_home_lights
+      HEALTHCHECK_PORT: 9090
     depends_on:
       postgres_light:
         condition: service_healthy
@@ -122,6 +123,12 @@ services:
       broker:
         condition: service_healthy
         restart: true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${HEALTHCHECK_PORT}/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   broker:
     image: apache/kafka:latest

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -33,15 +34,17 @@ var (
 	kafkaURL    string = "localhost:9092"
 	kafkaTopic  string = "data_topic"
 	kafkaReader *kafka.Reader
+
+	healthCheckPort string = "9090"
 )
 
 func envVar(value string, variable string) string {
 	tmp, flag := os.LookupEnv(variable)
 	if flag {
-		fmt.Printf("ENV %s = %s\n", variable, tmp)
+		//fmt.Printf("ENV %s = %s\n", variable, tmp)
 		return tmp
 	} else {
-		fmt.Printf("ENV %s = %s\n", variable, value)
+		//fmt.Printf("ENV %s = %s\n", variable, value)
 		return value
 	}
 }
@@ -55,6 +58,8 @@ func initEnv() {
 
 	kafkaURL = envVar(kafkaURL, "KAFKA_URL")
 	kafkaTopic = envVar(kafkaTopic, "KAFKA_TOPIC")
+
+	healthCheckPort = envVar(healthCheckPort, "HEALTHCHECK_PORT")
 }
 
 func saveLightTelemetry(data *LIGHTtelemetry) error {
@@ -90,6 +95,17 @@ func main() {
 	}
 	defer db.Close()
 
+	// Start health-check listener
+	go func() {
+		fmt.Printf("Starting healthcheck endpoint at port %s\n", healthCheckPort)
+		http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("OK"))
+		})
+		_ = http.ListenAndServe(":"+healthCheckPort, nil)
+	}()
+
+	// Start Kafka Consumer
 	logger := log.New(os.Stdout, "Kafka consumer: ", 0)
 	kafkaReader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  strings.Split(kafkaURL, ","),

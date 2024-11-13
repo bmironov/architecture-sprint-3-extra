@@ -22,7 +22,8 @@
                 "DB_PORT": "5434",
                 "DB_NAME": "warm_home_light",
                 "KAFKA_URL": "localhost:9092",
-                "KAFKA_TOPIC": "warm_home_lights"
+                "KAFKA_TOPIC": "warm_home_lights",
+                "HEALTHCHECK_PORT": "9090"
             },
             "args": [],
 //            "showLog": true
