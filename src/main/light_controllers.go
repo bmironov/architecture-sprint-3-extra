@@ -18,6 +18,8 @@ func wrapLightResponse(w http.ResponseWriter, err error, status int) {
 }
 
 func createLight(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("createLight")
+
 	decoder := json.NewDecoder(req.Body)
 	var data light.LIGHT
 	err := decoder.Decode(&data)
@@ -45,6 +47,7 @@ func createLight(w http.ResponseWriter, req *http.Request) {
 
 func updateLight(w http.ResponseWriter, req *http.Request) {
 	var data light.LIGHT
+	fmt.Println("updateLight")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
@@ -83,7 +86,7 @@ func updateLight(w http.ResponseWriter, req *http.Request) {
 }
 
 func deleteLight(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("/light endpoint called")
+	fmt.Println("deleteLight")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
@@ -107,6 +110,8 @@ func deleteLight(w http.ResponseWriter, req *http.Request) {
 }
 
 func findLight(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("findLight")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -138,6 +143,8 @@ func findLight(w http.ResponseWriter, req *http.Request) {
 func addLightTelemetry(w http.ResponseWriter, req *http.Request) {
 	var data light.LIGHTtelemetry
 
+	fmt.Println("addLightTelemetry")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -166,6 +173,8 @@ func addLightTelemetry(w http.ResponseWriter, req *http.Request) {
 }
 
 func getLightTelemetry(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("getLightTelemetry")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -192,6 +201,8 @@ func getLightTelemetry(w http.ResponseWriter, req *http.Request) {
 
 func sendLightCommand(w http.ResponseWriter, req *http.Request) {
 	var data light.LIGHTstate
+
+	fmt.Println("sendLightCommand")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)

@@ -18,6 +18,8 @@ func wrapHvacResponse(w http.ResponseWriter, err error, status int) {
 }
 
 func createHvac(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("createHvac")
+
 	decoder := json.NewDecoder(req.Body)
 	var data hvac.HVAC
 	err := decoder.Decode(&data)
@@ -45,6 +47,8 @@ func createHvac(w http.ResponseWriter, req *http.Request) {
 
 func updateHvac(w http.ResponseWriter, req *http.Request) {
 	var data hvac.HVAC
+
+	fmt.Println("updateHvac")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
@@ -83,7 +87,7 @@ func updateHvac(w http.ResponseWriter, req *http.Request) {
 }
 
 func deleteHvac(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("/hvac endpoint called")
+	fmt.Println("deleteHvac")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
@@ -107,6 +111,8 @@ func deleteHvac(w http.ResponseWriter, req *http.Request) {
 }
 
 func findHvac(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("findHvac")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -138,6 +144,8 @@ func findHvac(w http.ResponseWriter, req *http.Request) {
 func addHvacTelemetry(w http.ResponseWriter, req *http.Request) {
 	var data hvac.HVACtelemetry
 
+	fmt.Println("addHvacTelemetry")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -156,11 +164,15 @@ func addHvacTelemetry(w http.ResponseWriter, req *http.Request) {
 
 	data.HvacId = id
 	data.CreatedAt = time.Now().UTC()
+	fmt.Printf("Processing message: hvac_id=%d, created=%s, current_temp=%5.2f, target_temp=%5.2f ... ",
+		data.HvacId, data.CreatedAt.String(), data.CurrentTemp, data.TargetTemp)
+
 	tele, err := hvac.CreateHvacTelemetry(db, &data)
 	if err != nil {
 		wrapHvacResponse(w, err, http.StatusInternalServerError)
 		return
 	}
+	fmt.Printf("ID=%d\n", data.Id)
 
 	json, err := json.Marshal(tele)
 	if err != nil {
@@ -173,6 +185,8 @@ func addHvacTelemetry(w http.ResponseWriter, req *http.Request) {
 }
 
 func getHvacTelemetry(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("getHvacTelemetry")
+
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)
 	if err != nil {
@@ -199,6 +213,7 @@ func getHvacTelemetry(w http.ResponseWriter, req *http.Request) {
 
 func sendHvacCommand(w http.ResponseWriter, req *http.Request) {
 	var data hvac.HVACstate
+	fmt.Println("sendHvacCommand")
 
 	str := req.PathValue("id")
 	id, err := strconv.Atoi(str)

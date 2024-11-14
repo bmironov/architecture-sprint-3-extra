@@ -129,8 +129,8 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		fmt.Printf("Processing message light_id=%d, current: %5.2f target: %5.2f ... ",
-			data.LightId, data.CurrentBright, data.TargetBright)
+		fmt.Printf("Processing message light_id=%d, created=%s, current_bright=%5.2f target_bright=%5.2f ... ",
+			data.LightId, data.CreatedAt.String(), data.CurrentBright, data.TargetBright)
 		err = saveLightTelemetry(&data)
 		if err != nil {
 			log.Fatalln(err)
