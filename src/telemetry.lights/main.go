@@ -99,6 +99,7 @@ func main() {
 	go func() {
 		fmt.Printf("Starting healthcheck endpoint at port %s\n", healthCheckPort)
 		http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("/healthz endpoint")
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("OK"))
 		})
@@ -109,6 +110,7 @@ func main() {
 	logger := log.New(os.Stdout, "Kafka consumer: ", 0)
 	kafkaReader = kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  strings.Split(kafkaURL, ","),
+		GroupID:  "warm-home-lights-telemetry",
 		Topic:    kafkaTopic,
 		Logger:   logger,
 		MinBytes: 10240,    // 10KB
