@@ -21,45 +21,45 @@ spec:
         io.kompose.service: warm-home-light-telemetry
     spec:
       containers:
-        - env:
-            - name: DB_HOST
-              value: postgres-light.default
-            - name: DB_NAME
-              value: warm_home_light
-            - name: DB_PASS
-              value: light_password
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_USER
-              value: light_user
-            - name: HEALTHCHECK_PORT
-              value: "9090"
-            - name: KAFKA_TOPIC
-              value: warm-home-lights
-            - name: KAFKA_URL
-              value: my-cluster-kafka-bootstrap.kafka:9092
-          image: warm-home-light-telemetry
-          imagePullPolicy: Never
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 9090
-            failureThreshold: 5
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 9090
-            failureThreshold: 5
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 5
-          name: warm-home-light-telemetry
-          ports:
-            - containerPort: 9090
-              protocol: TCP
-            - containerPort: 9092
-              protocol: TCP
+      - env:
+        - name: DB_HOST
+          value: postgres-light.default
+        - name: DB_NAME
+          value: warm_home_light
+        - name: DB_PASS
+          value: light_password
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: light_user
+        - name: HEALTHCHECK_PORT 
+          value: "9090" # match healthz-port value
+        - name: KAFKA_TOPIC
+          value: warm-home-lights
+        - name: KAFKA_URL
+          value: my-cluster-kafka-bootstrap.kafka:9092
+        image: warm-home-light-telemetry
+        imagePullPolicy: Never
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz-port
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz-port
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: warm-home-light-telemetry
+        ports:
+          - name: healthz-port
+            containerPort: 9090
+          - name: kafka
+            containerPort: 9092
       restartPolicy: Always

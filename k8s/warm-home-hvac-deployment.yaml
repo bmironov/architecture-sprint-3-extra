@@ -23,7 +23,7 @@ spec:
       containers:
         - env:
             - name: APP_PORT
-              value: "8080"
+              value: "8080" # match app-port value
             - name: DB_HOST
               value: postgres-hvac.default
             - name: DB_NAME
@@ -39,7 +39,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /livez
-              port: 8080
+              port: app-port
             failureThreshold: 5
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -47,13 +47,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /readyz
-              port: 8080
+              port: app-port
             failureThreshold: 5
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
           name: warm-home-hvac
           ports:
-            - containerPort: 8080
-              protocol: TCP
+            - name: app-port
+              containerPort: 8080
       restartPolicy: Always
