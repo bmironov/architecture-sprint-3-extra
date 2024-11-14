@@ -309,10 +309,14 @@ curl -s http://localhost:$APP_PORT/lights/lights/1 | jq
 
 curl --request PUT --header "Content-Type: application/json" \
   --data '{"current_temp":22.0,"target_temp":22.5}' \
-  http://localhost:$APP_PORT/hvac/hvac/1/telemetry
+  http://localhost:$APP_PORT/hvac/hvac/1/telemetry | jq
+
+curl -X GET http://localhost:$APP_PORT/hvac/hvac/1/telemetry | jq
+
 curl --request PUT --header "Content-Type: application/json" \
   --data '{"current_bright":80.5,"target_bright":92.0}' \
-  http://localhost:$APP_PORT/lights/lights/1/telemetry
+  http://localhost:$APP_PORT/lights/lights/1/telemetry | jq
 
+curl -X GET http://localhost:$APP_PORT/lights/lights/1/telemetry | jq
     
 ```
