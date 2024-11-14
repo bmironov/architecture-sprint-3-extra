@@ -41,8 +41,17 @@ spec:
           image: warm-home-light-telemetry
           imagePullPolicy: Never
           livenessProbe:
-            exec:
-              command: ["wget", "-qO-", "http://127.0.0.1:9090/healthz"]
+            httpGet:
+              path: /healthz
+              port: 9090
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
             failureThreshold: 5
             initialDelaySeconds: 5
             periodSeconds: 10

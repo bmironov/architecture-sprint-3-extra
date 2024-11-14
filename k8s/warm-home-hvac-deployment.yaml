@@ -37,8 +37,17 @@ spec:
           image: warm-home-hvac
           imagePullPolicy: Never
           livenessProbe:
-            exec:
-              command: ["wget", "-qO-", "http://127.0.0.1:8080/"]
+            httpGet:
+              path: /livez
+              port: 8080
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
             failureThreshold: 5
             initialDelaySeconds: 5
             periodSeconds: 10
