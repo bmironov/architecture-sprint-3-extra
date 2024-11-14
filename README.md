@@ -229,8 +229,7 @@ kompose -f ../docker-compose.yaml convert
 
 Apply k8s YAML files
 ```
-cd k8s
-kubectl apply -f .
+kubectl apply -f k8s
 ```
 
 Check k8s services
@@ -317,6 +316,11 @@ curl --request PUT --header "Content-Type: application/json" \
   --data '{"current_bright":80.5,"target_bright":92.0}' \
   http://localhost:$APP_PORT/lights/lights/1/telemetry | jq
 
+curl --request PUT --header "Content-Type: application/json" \
+  --data '{"current_bright":81.5,"target_bright":95.6}' \
+  http://localhost:$APP_PORT/lights/lights/2/telemetry | jq
+
 curl -X GET http://localhost:$APP_PORT/lights/lights/1/telemetry | jq
+curl -X GET http://localhost:$APP_PORT/lights/lights/2/telemetry | jq
     
 ```
