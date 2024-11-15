@@ -3,7 +3,12 @@ FROM golang:1.23-alpine3.20 as builder
 WORKDIR /app
 COPY src/go.mod src/go.sum ./
 COPY src/telemetry.lights/*.go ./telemetry/
-RUN go mod download && go mod tidy && cd telemetry; CGO_ENABLED=0 GOOS=linux go build -o /warm_home_telemetry ./...
+
+# Disable C dependencies for portability
+ENV CGO_ENABLED=0 
+# Target OS
+ENV GOOS=linux
+RUN go mod download && go mod tidy && cd telemetry; go build -ldflags="-s -w" -o /warm_home_telemetry ./...
 
 # Execution stage
 FROM alpine:latest
