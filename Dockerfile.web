@@ -1,6 +1,7 @@
 # Compile stage
 FROM golang:1.23-alpine3.20 as builder
 WORKDIR /app
+RUN apk add upx
 COPY src/go.mod src/go.sum ./
 COPY src/main/*.go  ./main/
 COPY src/hvac/*.go  ./hvac/
@@ -11,6 +12,7 @@ ENV CGO_ENABLED=0
 # Target OS
 ENV GOOS=linux
 RUN go mod download && go mod tidy && cd main; go build -ldflags="-s -w" -o /warm_home ./...
+RUN upx -9 /warm_home
 
 # Execution stage
 FROM alpine:latest
