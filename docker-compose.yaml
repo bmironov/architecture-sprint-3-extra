@@ -1,0 +1,257 @@
+name: warm-home
+
+services:
+  kong-gateway:
+    image: kong/kong-gateway:latest
+    container_name: kong-gateway
+    ports:
+      - '8000:8000' # Takes incoming HTTP traffic from Consumers, and forwards it to upstream Services.
+      - '8443:8443' # Takes incoming HTTPS traffic from Consumers, and forwards it to upstream Services.
+      - '8001:8001' # Admin API. Listens for calls from the command line over HTTP.
+      - '8444:8444' # Admin API. Listens for calls from the command line over HTTPS.
+      - '8002:8002' # Kong Manager (GUI). Listens for HTTP traffic.
+      - '8445:8445' # Kong Manager (GUI). Listens for HTTPS traffic.
+      - '8003:8003' 
+      - '8004:8004'
+      - '8005:8005' # Hybrid mode only. Control Plane listens for traffic from Data Planes.
+      - '8006:8006' # Hybrid mode only. Control Plane listens for Vitals telemetry data from Data Planes.
+      - '8007:8007' # Status listener. Listens for calls from monitoring clients over HTTP.
+    networks:
+      - warm-home
+    depends_on:
+      postgres-kong:
+        condition: service_healthy
+        restart: true
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: postgres-kong
+      KONG_PG_PORT: 5432
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kongpass
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    healthcheck:
+      test: ["CMD-SHELL", "kong health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  warm-home-hvac:
+    image: warm-home-hvac:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile.web
+    container_name: warm-home-hvac
+    ports:
+      - '8080:8080'
+    networks:
+      - warm-home
+    environment:
+      APP_PORT: 8080
+      DB_USER: hvac_user
+      DB_PASS: hvac_password
+      DB_HOST: postgres-hvac
+      DB_PORT: 5432
+      DB_NAME: warm_home_hvac
+    depends_on:
+      postgres-hvac:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  warm-home-light:
+    image: warm-home-light:latest
+    container_name: warm-home-light
+    build:
+      context: .
+      dockerfile: ./Dockerfile.web
+    ports:
+      - '8081:8080'
+    networks:
+      - warm-home
+    environment:
+      APP_PORT: 8080
+      DB_USER: light_user
+      DB_PASS: light_password
+      DB_HOST: postgres-light
+      DB_PORT: 5432
+      DB_NAME: warm_home_light
+      KAFKA_URL: broker:29092
+      KAFKA_TOPIC: warm-home-lights
+    depends_on:
+      postgres-light:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  warm-home-light-telemetry:
+    image: warm-home-light-telemetry:latest
+    container_name: warm-home-light-telemetry
+    build:
+      context: .
+      dockerfile: ./Dockerfile.telemetry.lights
+    ports:
+      - '39092:9092'
+    networks:
+      - warm-home
+    environment:
+      DB_USER: light_user
+      DB_PASS: light_password
+      DB_HOST: postgres-light
+      DB_PORT: 5432
+      DB_NAME: warm_home_light
+      KAFKA_URL: broker:29092
+      KAFKA_TOPIC: warm-home-lights
+      HEALTHCHECK_PORT: 9090
+    depends_on:
+      postgres-light:
+        condition: service_healthy
+        restart: true
+      broker:
+        condition: service_healthy
+        restart: true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${HEALTHCHECK_PORT}/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  broker:
+    image: apache/kafka:latest
+    container_name: broker
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+      - '29093:29093'
+    networks:
+      - warm-home
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+#      KAFKA_CLIENT_USERS: user
+#      KAFKA_CLIENT_PASSWORDS: password
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres-kong:
+    image: postgres:alpine
+    container_name: postgres-kong
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kongpass
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+    networks:
+      - warm-home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    volumes:
+      - kong-data:/var/lib/postgresql/data
+
+  postgres-hvac:
+    image: postgres:alpine
+    container_name: postgres-hvac
+    environment:
+      POSTGRES_DB: warm_home_hvac
+      POSTGRES_USER: hvac_user
+      POSTGRES_PASSWORD: hvac_password
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5433:5432"
+    networks:
+      - warm-home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    volumes:
+      - hvac-data:/var/lib/postgresql/data
+
+  postgres-light:
+    image: postgres:alpine
+    container_name: postgres-light
+    environment:
+      POSTGRES_DB: warm_home_light
+      POSTGRES_USER: light_user
+      POSTGRES_PASSWORD: light_password
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5434:5432"
+    networks:
+      - warm-home
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    volumes:
+      - light-data:/var/lib/postgresql/data
+
+networks:
+  warm-home:
+    name: warm-home
+    driver: bridge
+
+volumes:
+  hvac-data:
+  light-data:
+  kong-data:
