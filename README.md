@@ -2,7 +2,7 @@
 
 ## Introduction
 
-To simplify development single "monolight" app was coded in Go language. Based
+To simplify development single "monolith" app was coded in Go language. Based
 on this code single Docker image is produced. Based on supplied environment
 variable values same image accesses different databses.
 
@@ -136,7 +136,7 @@ directly save them into PostgreSQL, it will produce new messages in related
 Kafka topic. Then separate application in ```src/telemetry.lights``` will be
 simple Kafka condumer that has only one purpose - receive messages from topic
 and save them into PostgreSQL. At this point our ```docker-compose.yaml``` has 2
-databases (one for HAVA, one for Lighting) and 3 applications (HVAC "monolith",
+databases (one for HVAC, one for Lighting) and 3 applications (HVAC "monolith",
 Lighting microservice, Lighting telemetry consumer).
 
 ### Auto topic creation
